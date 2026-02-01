@@ -65,7 +65,7 @@ docs = [
     "mike",
 ]
 test = [
-    "pytest",
+    "pytest==6.5.0",
     "pytest-cov",
 ]
 # Minimal dependencies for remote validation (no sglang, litellm, openai, docker, etc.)

@@ -21,6 +21,7 @@ from swesmith.bug_gen.procedural.python.remove import (
     RemoveLoopModifier,
     RemoveWrapperModifier,
 )
+from swesmith.bug_gen.procedural.python.off_by_one import OffByOneModifier
 
 MODIFIERS_PYTHON: list[ProceduralModifier] = [
     ClassRemoveBasesModifier(likelihood=0.25),
@@ -36,4 +37,5 @@ MODIFIERS_PYTHON: list[ProceduralModifier] = [
     OperationChangeConstantsModifier(likelihood=0.4),
     OperationChangeModifier(likelihood=0.4),
     OperationSwapOperandsModifier(likelihood=0.4),
+    OffByOneModifier(likelihood=0.25)
 ]

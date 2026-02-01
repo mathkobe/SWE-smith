@@ -131,9 +131,9 @@ def run_patch_in_container(
         log_dir = log_dir / run_id / instance_id
         log_dir.mkdir(parents=True, exist_ok=True)
         container_name = f"swesmith.{container_type}.{run_id}.{instance_id}"
+
         log_file = log_dir / LOG_INSTANCE
         logger = setup_logger(container_name, log_file)
-
         # Start docker container
         rp.pull_image()
         container = client.containers.create(

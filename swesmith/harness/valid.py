@@ -98,7 +98,6 @@ def run_validation(instance: dict) -> dict:
             val_postgold_path,
         )
         shutil.rmtree(valid_folder / ref_inst_id)
-
     logger, timed_out = run_patch_in_container(
         instance,
         instance["repo"],

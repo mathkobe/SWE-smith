@@ -40,4 +40,4 @@ if [ -n "${SWESMITH_EXTRA_TEST_DEPS:-}" ]; then
 fi
 
 echo "> Ensuring pytest available for smoke"
-python -m pip install pytest
+python -m pip install pytest==6.5.0

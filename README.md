@@ -1,108 +1,128 @@
-<p align="center">
-  <a href="https://swesmith.com/">
-    <img src="docs/assets/banner.png" style="height: 10em" alt="Kawhi the SWE-smith" />
-  </a>
-</p>
-<br>
-<div align="center">
-<strong>NeurIPS 2025 Datasets & Benchmarks Track - Spotlight 🔦</strong>
-</div>
-<br>
-<div align="center">
-<a href="https://www.python.org/">
-  <img alt="Build" src="https://img.shields.io/badge/Python-3.10+-1f425f.svg?color=purple">
-</a>
-<a href="https://copyright.princeton.edu/policy">
-  <img alt="License" src="https://img.shields.io/badge/License-MIT-blue">
-</a>
-<a href="https://badge.fury.io/py/swesmith">
-  <img src="https://badge.fury.io/py/swesmith.svg">
-</a>
-<a href="https://arxiv.org/abs/2504.21798">
-  <img src="https://img.shields.io/badge/arXiv-2504.21798-b31b1b.svg">
-</a>
-</div>
+# SWE-smith Bug Generation & Validation
 
-<hr />
+## Overview
 
-SWE-smith is a toolkit for training [SWE-agents](https://github.com/SWE-agent/SWE-agent). You can:
-* Turn any Github repository into a [SWE-gym](https://github.com/SWE-Gym/SWE-Gym).
-* Create *unlimited* tasks (e.g., file localization, program repair, [SWE-bench](https://github.com/SWE-bench/SWE-bench)) for that repo.
-* Train an LM to become a better SWE ([SWE-agent-LM-32B](https://huggingface.co/SWE-bench/SWE-agent-LM-32B)).
+We extended SWE-smith with two novel bug generation strategies and a local validation framework:
 
-## ⚒️ Build Environments
-If you're interested in turning a GitHub repository into a SWE-gym, install the package from [source](https://swesmith.com/getting_started/installation/).
+### 1. Bug Generation Methods
 
-> [!TIP]
-> SWE-smith requires Docker to create execution environments. SWE-smith was developed and tested on Ubuntu 22.04.4 LTS.
-> We do *not* plan on supporting Windows or MacOS.
+#### (1) Procedural Bug Generation: Off-by-One Errors
+Automatically generates boundary condition bugs in Python code:
+- **Comparison operators**: Changes `>=` to `>`, `<=` to `<`
+- **Loop boundaries**: Modifies `range(n)` to `range(n-1)`, `range(n+1)` to `range(n)`
+- **Array indexing**: Introduces off-by-one errors in list/array access
 
-You can then build a dataset for the repository by...
-1. [Creating an environment](https://swesmith.com/guides/env_construction/#create-an-execution-environment)
-2. [Synthesizing task instances](https://swesmith.com/guides/create_instances/)
-3. [Keep tasks that break 1+ unit tests](https://swesmith.com/guides/harnesses/)
-4. [Generating issue text for your tasks](https://swesmith.com/guides/issue_gen/)
+**Motivation**: These methods were developed by prompting ChatGPT/Claude to identify bug patterns most likely to improve SWE-bench coverage. Off-by-one errors are among the most common real-world bugs.
 
-## 🏋️ Train SWE-agent's
-Training SWE-agent's using the [SWE-smith dataset](https://huggingface.co/datasets/SWE-bench/SWE-smith) is super simple.
-```python
-from swesmith.profiles import registry
-from datasets import load_dataset
-ds = load_dataset("SWE-bench/SWE-smith", split="train") # Loads all 52k task instances
-for task in ds:
-    rp = registry.get_from_inst(task)  # Get the RepoProfile for the task
-    container = rp.get_container(task) # Returns pointer to a Docker container with the task initialized
+#### (2) LLM-Powered Assertion Rewriting
+Uses LLMs to rewrite test assertions with subtle logical errors.
 
-    """TODO: Train!"""
+**Motivation**: In RL/ML repositories, assertions are critical for:
+- Tensor shape validation
+- Data-label alignment (especially in RL rollout)
+- Gradient flow verification
+
+These assertions act as the primary safeguard against silent failures, making them ideal targets for realistic bug injection.
+
+### 2. Local Validation
+
+We validate bugs locally using Docker images with proper test environments:
+```
+REPOSITORY                                                    TAG           IMAGE ID      
+swebench/swesmith.x86_64.instagram_1776_monkeytype.70c3acf6   with_pytest   e9abbbd9fe20
 ```
 
-SWE-smith has been used to
-* Fine-tune Qwen 2.5 Coder into SWE-agent-LM-32B (A +32% jump on SWE-bench Verified!) using [SWE-agent](https://github.com/SWE-agent/SWE-agent) [[Tutorial](https://swesmith.com/guides/train_swe_agent/)]
-* Perform GRPO style reinforcement learning using [SkyRL](https://github.com/NovaSky-AI/SkyRL)
+This enables:
+- Fast iteration without API calls
+- Reproducible validation
+- Parallel processing (multi-worker support)
 
-## 💿 Resources
-* [52k Task Instances](https://huggingface.co/datasets/SWE-bench/SWE-smith)
-* [SWE-agent-LM-32B](https://huggingface.co/SWE-bench/SWE-agent-LM-32B); **40.2%** pass@1 on [SWE-bench Verified](https://huggingface.co/datasets/SWE-bench/SWE-bench_Verified)!
-* [26k SWE-agent Trajectories](https://huggingface.co/datasets/SWE-bench/SWE-smith-trajectories), including the 5k SWE-agent-LM-32B was trained on.
-* [250+ Environments](https://github.com/SWE-bench/SWE-smith-envs), one Docker image per repo represented in SWE-smith.
+---
 
-And there's more coming!
+## Setup & Usage
 
-## 💫 Contributions
-We're actively working on several follow ups!
-Check out the [Contributing Guide](CONTRIBUTING.md) for more.
+### Prerequisites
+```bash
+# Navigate to project directory
+cd /workspaces/SWE-smith
 
-Contact Person: [John Yang](https://john-b-yang.github.io/), [Kilian Lieret](https://lieret.net)
-(Email: [johnby@stanford.edu](mailto:johnby@stanford.edu))
+# Activate virtual environment
+source vmax_env/bin/activate
 
-## 🪪 License
-MIT. Check `LICENSE` for more information.
-
-## ✍️ Citation
-
-```bibtex
-@inproceedings{yang2025swesmith,
-  title={SWE-smith: Scaling Data for Software Engineering Agents}, 
-  author={John Yang and Kilian Lieret and Carlos E. Jimenez and Alexander Wettig and Kabir Khandpur and Yanzhe Zhang and Binyuan Hui and Ofir Press and Ludwig Schmidt and Diyi Yang},
-  booktitle = {Proceedings of the 39th Annual Conference on Neural Information Processing Systems (NeurIPS 2025 D&B Spotlight)},
-  year={2025},
-  eprint={2504.21798},
-  archivePrefix={arXiv},
-  primaryClass={cs.SE},
-  url={https://arxiv.org/abs/2504.21798},
-  note={arXiv:2504.21798, accepted at NeurIPS 2025 (Spotlight)}
-}
+# Set API key for LLM-based generation
+export ANTHROPIC_API_KEY="sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-## 📕 Our Other Projects
-<div align="center">
-  <a href="https://github.com/SWE-bench/SWE-bench"><img src="docs/assets/swebench_logo_text_below.svg" alt="SWE-bench" height="120px"></a>
-  &nbsp;&nbsp;
-  <a href="https://github.com/SWE-agent/SWE-agent"><img src="docs/assets/sweagent_logo_text_below.svg" alt="SWE-agent" height="120px"></a>
-  &nbsp;&nbsp;
-  <a href="https://github.com/SWE-agent/Mini-SWE-Agent"><img src="docs/assets/mini_logo_text_below.svg" alt="Mini-SWE-Agent" height="120px"></a>
-  &nbsp;&nbsp;
-  <a href="https://github.com/SWE-agent/SWE-ReX"><img src="docs/assets/swerex_logo_text_below.svg" alt="SWE-ReX" height="120px"></a>
-  &nbsp;&nbsp;
-  <a href="https://github.com/SWE-bench/sb-cli"><img src="docs/assets/sbcli_logo_text_below.svg" alt="sb-cli" height="120px"></a>
-</div>
+### Step 1: Generate Bugs
+
+#### Procedural Off-by-One Bugs
+```bash
+python -m swesmith.bug_gen.off_by_one.generate \
+    --max_bugs 2 \
+    Instagram__MonkeyType.70c3acf6
+```
+
+#### LLM Assertion Rewriting
+```bash
+python -m swesmith.bug_gen.rewrite_assert.rewrite_assert \
+    Instagram__MonkeyType.70c3acf6 \
+    --config_file configs/bug_gen/lm_rewrite_asserts.yml \
+    --model claude-haiku-4-5-20251001 \
+    --max_bugs 50
+```
+
+### Step 2: Aggregate Patches
+```bash
+python -m swesmith.bug_gen.collect_patches \
+    logs/bug_gen/Instagram__MonkeyType.70c3acf6/
+```
+
+**Output**: `logs/bug_gen/Instagram__MonkeyType.70c3acf6_all_patches.json`
+
+### Step 3: Local Validation
+```bash
+python swesmith/local_valid_multiple_process.py \
+    logs/bug_gen/Instagram__MonkeyType.70c3acf6_all_patches.json \
+    --image swebench/swesmith.x86_64.instagram_1776_monkeytype.70c3acf6:with_pytest \
+    --workers 4 \
+    --output logs/custom_validation_results
+```
+
+---
+
+## Results
+
+Validation results are saved to `logs/custom_validation_results/`:
+```
+logs/custom_validation_results/
+├── summary.json                    # Overall statistics
+└── <instance_id>/                  # Per-bug reports
+    ├── eval.sh                     # Test commands
+    ├── patch.diff                  # Bug patch
+    ├── report.json                 # Test results (FAIL_TO_PASS, PASS_TO_FAIL)
+    ├── run_instance.log            # Execution log
+    └── test_output.txt             # pytest output
+```
+
+### Final Example Results
+```
+======================================================================
+SUMMARY
+======================================================================
+Total patches: 31
+Bugs detected (1+ fail-to-pass): 23  (74.2% detection rate)
+Bugs not detected (0 fail-to-pass): 8
+Errors: 0
+Total failing tests introduced: 330
+
+✓ Results saved to: logs/custom_validation_results/
+  - summary.json: Overall summary
+  - <instance_id>/: Individual bug reports
+======================================================================
+```
+
+**Key Metrics**:
+- **74.2% detection rate**: 23 out of 31 bugs triggered test failures
+- **330 failing tests**: Average of ~14 tests per detected bug
+- **0 errors**: All bugs applied cleanly without crashes
+

@@ -1,0 +1,78 @@
+name: lm_rewrite_asserts
+system: |-
+  You are a software developer tasked with creating buggy test assertions.
+  
+  Your goal is to rewrite an assert statement so that it:
+  1. Is semantically equivalent to the original assert (same intent)
+  2. Contains a subtle bug that changes the behavior
+  3. Is still syntactically valid Python
+  
+  The bug should be realistic and might involve:
+  - Off-by-one errors in comparisons
+  - Inverted boolean logic
+  - Swapped operands
+  - Incorrect operators (e.g., > instead of >=)
+  - Type confusions
+  - Logic errors in compound conditions
+  
+  Do NOT modify the assertion message if present.
+  Format your output as an assert statement only, wrapped in triple backticks.
+  
+reasoning: |-
+  Let me think through this step by step:
+  
+  1. First, analyze the original assert condition to understand what it's checking
+  2. Identify the type of assertion (comparison, membership, type check, etc.)
+  3. Think about what subtle bugs could occur:
+     - Boundary conditions: off-by-one in < vs <=, > vs >=
+     - Logic inversions: and vs or, not operator placement
+     - Variable swaps: x < y becomes y < x
+     - Operator changes: == to !=, < to >
+     - Negation mistakes: missing or extra negation
+  4. Consider which bug type would be most realistic and pass initial inspection
+  5. Verify the buggy version is still valid Python syntax
+  6. Ensure the bug changes the behavior in a way that could cause test failures
+  7. Make sure the message and general structure remain similar
+
+demonstration: |-
+  Example 1:
+  Original: assert x > 0, "x must be positive"
+  Buggy: assert x >= 0, "x must be positive"
+  Reasoning: Changed > to >=, allowing x=0 when x must be strictly positive
+  
+  Example 2:
+  Original: assert len(items) < 10, "too many items"
+  Buggy: assert len(items) <= 10, "too many items"
+  Reasoning: Off-by-one error: allows 10 items when only < 10 should pass
+  
+  Example 3:
+  Original: assert isinstance(obj, dict) and obj is not None
+  Buggy: assert isinstance(obj, dict) or obj is not None
+  Reasoning: Logic inversion: changed AND to OR, allows non-dict non-None values
+  
+  Example 4:
+  Original: assert result != None
+  Buggy: assert result == None
+  Reasoning: Operator inversion: changed != to ==, inverts the entire check
+  
+instance: |-
+  Rewrite the following assert statement to be semantically equivalent but with a subtle bug.
+  
+  Assert test condition: {assert_test}
+  Assert message: {assert_message}
+  Original line: {assert_original_line}
+  
+  Context (surrounding code):
+  ```
+  {file_content}
+  ```
+  
+  Generate a buggy version of this assert statement. Make sure it:
+  1. Looks similar to the original
+  2. Has a subtle logic error
+  3. Is still valid Python syntax
+  
+  Provide ONLY the buggy assert statement in the following format:
+  
+  ```python
+  assert <buggy_condition>

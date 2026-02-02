@@ -10,7 +10,7 @@ This script:
 5. Generates proper reports
 
 Usage:
-    python local_valid_multiple_process_validation.py <patches.json> --image <image_name> [--workers N]
+    python swesmith/local_valid_multiple_process.py <patches.json> --image <image_name> [--workers N]
 """
 
 import json
@@ -378,7 +378,7 @@ def main():
     parser.add_argument('--image', required=True, help='Docker image to use')
     parser.add_argument('--workers', type=int, default=1, help='Number of parallel workers')
     parser.add_argument('--output', '-o', help='Output directory for reports', 
-                       default='custom_validation_results')
+                       default='logs/custom_validation_results')
     args = parser.parse_args()
     
     # Load patches
